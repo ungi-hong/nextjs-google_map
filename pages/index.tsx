@@ -1,107 +1,71 @@
 import { useState } from "react";
-import GoogleMapReact from "google-map-react";
-import { CheckBox } from "components/index";
+import { Marker, GoogleMap, LoadScript } from "@react-google-maps/api";
+import { SearchContent } from "components/index";
 
 interface LatLng {
   lat: number;
   lng: number;
 }
 
-interface SetLatLngArg extends LatLng {
-  x: number;
-  y: number;
-}
+const containerStyle = {
+  width: "400px",
+  height: "400px",
+};
 
-export default function Create() {
-  const [onClickCoordinate, setOnClickCoordinate] = useState<LatLng>({
+const TopPage = () => {
+  // const [layerTypes, setLayerTypes] = useState<string[]>([]);
+  const [latLng, setLatLng] = useState<LatLng>({
     lat: 35.7022589,
     lng: 139.7744733,
   });
-  const [layerTypes, setLayerTypes] = useState<string[]>([]);
-  const [googleMap, setMap] = useState<google.maps.Map | null>(null);
-  const [googleMaps, setMaps] = useState<typeof google.maps | null>(null);
-  const [geocoder, setGeocoder] = useState<google.maps.Geocoder | null>(null);
+  const [googleMap, setGoogleMap] = useState<google.maps.Map>(null);
   const [address, setAddress] = useState("");
-  const [marker, setMarker] = useState<google.maps.Marker>(null);
 
-  const moveCenter = (latLng: LatLng) => {
-    if (marker) {
-      marker.setMap(null);
-    }
-
-    setMarker(
-      new googleMaps.Marker({
-        map: googleMap,
-        position: latLng,
-      })
-    );
-
-    setOnClickCoordinate(latLng);
+  const onLoadGoogleMap = (map: google.maps.Map) => {
+    setGoogleMap(map);
   };
 
-  const setLatLng = ({ x, y, lat, lng }: SetLatLngArg) => {
-    moveCenter({ lat, lng });
-  };
+  const onClickMap = (e: google.maps.MapMouseEvent) => {
+    const lat = e.latLng.lat();
+    const lng = e.latLng.lng();
 
-  const onChangeCheckBox = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newLayerTypes = [...layerTypes];
-    if (e.currentTarget.checked) {
-      newLayerTypes.push(e.target.name);
-    } else {
-      const index = newLayerTypes.indexOf(e.target.name);
-      newLayerTypes.splice(index, 1);
-    }
-    setLayerTypes(newLayerTypes);
-  };
+    setLatLng({ lat, lng });
 
-  const handleApiLoaded = ({
-    map,
-    maps,
-  }: {
-    map: google.maps.Map;
-    maps: typeof google.maps;
-  }) => {
-    setMap(map);
-    setMaps(maps);
-
-    // https://developers.google.com/maps/documentation/javascript/geocoding
-    setGeocoder(new maps.Geocoder());
+    googleMap.panTo({ lat, lng });
   };
 
   const onClickSearch = () => {
+    const geocoder = new window.google.maps.Geocoder();
     geocoder.geocode({ address }, (results, status) => {
-      if (status === googleMaps.GeocoderStatus.OK) {
+      if (status === "OK") {
         const lat = results[0].geometry.location.lat();
         const lng = results[0].geometry.location.lng();
 
-        console.log(results);
-
-        moveCenter({ lat, lng });
+        setLatLng({ lat, lng });
+        googleMap.panTo({ lat, lng });
       }
     });
   };
 
   return (
     <>
-      <CheckBox onChangeCheckBox={onChangeCheckBox} name="TrafficLayer" />
-      <CheckBox onChangeCheckBox={onChangeCheckBox} name="TransitLayer" />
-      <div>
-        <input type="text" onChange={(e) => setAddress(e.target.value)} />
-        <button type="button" onClick={onClickSearch}>
-          Search
-        </button>
-      </div>
-
-      <div style={{ height: "800px", width: "800px" }}>
-        <GoogleMapReact
-          bootstrapURLKeys={{ key: process.env.NEXT_PUBLIC_GOOGLE_MAP_KEY }}
-          center={onClickCoordinate}
-          defaultZoom={15}
-          onClick={setLatLng}
-          layerTypes={layerTypes}
-          onGoogleApiLoaded={handleApiLoaded}
-        />
-      </div>
+      <SearchContent onClickSearch={onClickSearch} setAddress={setAddress} />
+      <LoadScript googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAP_KEY}>
+        <GoogleMap
+          mapContainerStyle={containerStyle}
+          center={{
+            lat: 35.7022589,
+            lng: 139.7744733,
+          }}
+          zoom={17}
+          onClick={onClickMap}
+          onLoad={onLoadGoogleMap}
+        >
+          <Marker position={latLng} />
+        </GoogleMap>
+      </LoadScript>
     </>
   );
-}
+};
+
+export default TopPage;

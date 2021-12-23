@@ -1,1 +1,1 @@
-export { default as CheckBox } from "components/CheckBox";
+export { default as SearchContent } from "components/SearchContent";
