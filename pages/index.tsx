@@ -1,3 +1,4 @@
+import type { NextPage } from "next";
 import { useState } from "react";
 import { Marker, GoogleMap, LoadScript } from "@react-google-maps/api";
 import { SearchContent } from "components/index";
@@ -12,7 +13,7 @@ const containerStyle = {
   height: "400px",
 };
 
-const TopPage = () => {
+const TopPage: NextPage = () => {
   // const [layerTypes, setLayerTypes] = useState<string[]>([]);
   const [latLng, setLatLng] = useState<LatLng>({
     lat: 35.7022589,
